@@ -232,8 +232,10 @@ class Caveman
         string result = "";
 		for( int i = 0; i <= stappen; i++ )
 		{
-			int bits = GetMove( oplossing );
-			result = code[bits] + result;
+            if (richting(oplossing) == 1) oplossing = this.code(xpositie(oplossing), ypositie(oplossing), 1, sw(xpositie(oplossing), ypositie(oplossing), schakelaars(oplossing)));
+            int bits = GetMove(oplossing);
+            if (richting(oplossing) == 1) oplossing = this.code(xpositie(oplossing), ypositie(oplossing), 1, sw(xpositie(oplossing), ypositie(oplossing), schakelaars(oplossing)));
+            result = code[bits] + result;
             foreach (int p in Adj(oplossing))
             {
                 if (xpositie(oplossing) > xpositie(p) && bits == 0) { oplossing = p; break; }

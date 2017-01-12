@@ -1,0 +1,10 @@
+C:\Users\Guus de Jonge\Documents\GitHub\IceCubeCaveman\bin\Debug\template.exe.config
+C:\Users\Guus de Jonge\Documents\GitHub\IceCubeCaveman\bin\Debug\template.exe
+C:\Users\Guus de Jonge\Documents\GitHub\IceCubeCaveman\bin\Debug\template.pdb
+C:\Users\Guus de Jonge\Documents\GitHub\IceCubeCaveman\bin\Debug\Cloo.dll
+C:\Users\Guus de Jonge\Documents\GitHub\IceCubeCaveman\bin\Debug\OpenTK.dll
+C:\Users\Guus de Jonge\Documents\GitHub\IceCubeCaveman\bin\Debug\System.Numerics.Vectors.dll
+C:\Users\Guus de Jonge\Documents\GitHub\IceCubeCaveman\bin\Debug\Cloo.xml
+C:\Users\Guus de Jonge\Documents\GitHub\IceCubeCaveman\obj\Debug\template.csprojResolveAssemblyReference.cache
+C:\Users\Guus de Jonge\Documents\GitHub\IceCubeCaveman\obj\Debug\template.exe
+C:\Users\Guus de Jonge\Documents\GitHub\IceCubeCaveman\obj\Debug\template.pdb
