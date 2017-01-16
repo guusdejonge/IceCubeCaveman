@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using Cloo;
+using System.Linq;
 
 /*
 
@@ -180,14 +181,19 @@ class Caveman
 
 		timer.Reset();
 		timer.Start();
-
-		while (true)
+        
+        int[] data = new int[N_in];
+        data = pos_in.Take(N_in).ToArray();
+        var flags = ComputeMemoryFlags.WriteOnly | ComputeMemoryFlags.UseHostPointer;
+        ComputeBuffer<int> pos_inBuffer = new ComputeBuffer<int>(Program.context, flags, data);
+            
+        while (true)
 		{
 			// verwerk alle posities die nog geevalueerd moeten worden (in pos_in, aantal is N_in)
 			if (Program.GPU)
 			{
-				// TODO: gpgpu versie
-			}
+                    // TODO: gpgpu versie
+            }
 			else
 			{
 				// cpu versie

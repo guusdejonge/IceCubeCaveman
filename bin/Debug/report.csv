@@ -1,0 +1,284 @@
+Testcase;Status;Tijd;CPU;Omschrijving
+Informatie;Correct;0,00;;Wat informatie over de te verwachten performance.
+IceBar2 (GPU);Afgebroken;4,05;100%;Simpele Testcase
+Polar1 (GPU);Afgebroken;1,97;100%;Simpele Testcase
+Kwadraat (GPU);Afgebroken;0,00;0%;Kleine testcase, maar veel stappen
+minderstates (GPU);Afgebroken;0,00;0%;Kun je een redelijk aantal switches aan?
+Groot (GPU);Afgebroken;0,00;0%;En een wat groter level?
+exp8 (CPU);Afgebroken;0,00;0%;Exponentieel met 8 switches.
+exp8 (GPU);Afgebroken;0,00;0%;Exponentieel met 8 switches.
+kleinereramp (CPU);Afgebroken;0,00;0%;Flink wat heen en weer lopen.
+kleinereramp (GPU);Afgebroken;0,00;0%;Flink wat heen en weer lopen.
+kleinerestatesramp (CPU);Afgebroken;0,00;0%;Korter pad, meer gelijktijdige taken.
+kleinerestatesramp (GPU);Afgebroken;0,00;0%;Korter pad, meer gelijktijdige taken.
+kleineramp (CPU);Afgebroken;0,00;0%;Meer heen en weer lopen.
+kleineramp (GPU);Afgebroken;0,00;0%;Meer heen en weer lopen.
+kleinestatesramp (CPU);Afgebroken;0,00;0%;Korter pad, meer gelijktijdige taken.
+kleinestatesramp (GPU);Afgebroken;0,00;0%;Korter pad, meer gelijktijdige taken.
+exp10 (CPU);Afgebroken;0,00;0%;Exponentieel met 10 switches.
+exp10 (GPU);Afgebroken;0,00;0%;Exponentieel met 10 switches.
+
+------------------------------------
+
+1;Informatie;Correct;0,00;;Wat informatie over de te verwachten performance.
+Test 1 - Informatie
+Wat informatie over de te verwachten performance.
+
+Omdat je CPU en GPU heel verschillend zijn, is het moeilijk om een uitspraak te doen over de te verwachten versnelling; dat hangt er immers van af hoe snel je GPU is ten opzichte van je CPU.
+Het kan zelfs zo zijn dat de GPU-versie langzamer is dan de CPU, zelfs als je een redelijk snelle GPU hebt. Een GPU is immers goed in het uitvoeren van veel taken tegelijk. Daarom is een Caveman-level waarbij de zoekboom heel breed, maar niet diep is, beter voor de GPU dan een level met een heel diepe, maar niet brede zoekboom.
+Op exp8/exp10 zou je de meeste versnelling moeten zien, gevolgd door de kleine(re)statesramp. Op ons testplatform is gaat kleine(re)ramp op de GPU langzamer dan op de CPU.
+
+Op ons testplatform, uitgerust met een GTX 750 Ti en een Core i7-860, haalt de referentieoplossing de volgende tijden:
+
+exp8:			 2,7s (GPU) 	 9,6s  (CPU)
+exp10:			 2,9s (GPU) 	 41,5s (CPU)
+kleinestatesramp:	 3,8s (GPU) 	 8,9s  (CPU)
+kleinerestatesramp:	 2,2s (GPU) 	 2,8s  (CPU)
+
+Op de overige testcases halen we geen versnelling of is de CPU-versie zelfs sneller.
+
+------------------------------------
+
+2;IceBar2 (GPU);Afgebroken;4,05;100%;Simpele Testcase
+Test 2 - IceBar2 (GPU)
+Simpele Testcase
+
+Invoer:
+tomjudge_IceBar2.in G O 0
+
+Uitvoer:
+initializing OpenCL... Intel(R) OpenCL (FULL_PROFILE).
+Intel(R) HD Graphics 530 (Gpu)
+6475 MiB global memory / 64 KiB local memory
+OpenCL code succesvol uitgevoerd.
+map: ../../maps/tomjudge_IceBar2.in (10 x 5, type B)
+
+Fout in oplossing:
+In de oplosmodus moet de uitvoer 8 niet-lege regels hebben.
+
+------------------------------------
+
+3;Polar1 (GPU);Afgebroken;1,97;100%;Simpele Testcase
+Test 3 - Polar1 (GPU)
+Simpele Testcase
+
+Invoer:
+tomjudge_Polar1.in G O 0
+
+Uitvoer:
+initializing OpenCL... Intel(R) OpenCL (FULL_PROFILE).
+Intel(R) HD Graphics 530 (Gpu)
+6475 MiB global memory / 64 KiB local memory
+OpenCL code succesvol uitgevoerd.
+map: ../../maps/tomjudge_Polar1.in (8 x 5, type B)
+
+Fout in oplossing:
+In de oplosmodus moet de uitvoer 8 niet-lege regels hebben.
+
+------------------------------------
+
+4;Kwadraat (GPU);Afgebroken;0,00;0%;Kleine testcase, maar veel stappen
+Test 4 - Kwadraat (GPU)
+Kleine testcase, maar veel stappen
+
+Invoer:
+(niet gestart)
+
+Uitvoer:
+(leeg)
+
+------------------------------------
+
+5;minderstates (GPU);Afgebroken;0,00;0%;Kun je een redelijk aantal switches aan?
+Test 5 - minderstates (GPU)
+Kun je een redelijk aantal switches aan?
+
+Invoer:
+(niet gestart)
+
+Uitvoer:
+(leeg)
+
+------------------------------------
+
+6;Groot (GPU);Afgebroken;0,00;0%;En een wat groter level?
+Test 6 - Groot (GPU)
+En een wat groter level?
+
+Invoer:
+(niet gestart)
+
+Uitvoer:
+(leeg)
+
+------------------------------------
+
+7;exp8 (CPU);Afgebroken;0,00;0%;Exponentieel met 8 switches.
+Test 7 - exp8 (CPU)
+Exponentieel met 8 switches.
+
+Invoer:
+(niet gestart)
+
+Uitvoer:
+(leeg)
+
+Tijd op GTX 750 Ti: 2,7s (3.5x sneller dan op Core i7-860)
+
+------------------------------------
+
+8;exp8 (GPU);Afgebroken;0,00;0%;Exponentieel met 8 switches.
+Test 8 - exp8 (GPU)
+Exponentieel met 8 switches.
+
+Invoer:
+(niet gestart)
+
+Uitvoer:
+(leeg)
+
+Tijd op GTX 750 Ti: 2,7s (3.5x sneller dan op Core i7-860)
+
+------------------------------------
+
+9;kleinereramp (CPU);Afgebroken;0,00;0%;Flink wat heen en weer lopen.
+Test 9 - kleinereramp (CPU)
+Flink wat heen en weer lopen.
+
+Invoer:
+(niet gestart)
+
+Uitvoer:
+(leeg)
+
+Tijd op GTX 750 Ti: 3,7s (2.9x langzamer dan op Core i7-860)
+
+------------------------------------
+
+10;kleinereramp (GPU);Afgebroken;0,00;0%;Flink wat heen en weer lopen.
+Test 10 - kleinereramp (GPU)
+Flink wat heen en weer lopen.
+
+Invoer:
+(niet gestart)
+
+Uitvoer:
+(leeg)
+
+Tijd op GTX 750 Ti: 3,7s (2.9x langzamer dan op Core i7-860)
+
+------------------------------------
+
+11;kleinerestatesramp (CPU);Afgebroken;0,00;0%;Korter pad, meer gelijktijdige taken.
+Test 11 - kleinerestatesramp (CPU)
+Korter pad, meer gelijktijdige taken.
+
+Invoer:
+(niet gestart)
+
+Uitvoer:
+(leeg)
+
+Tijd op GTX 750 Ti: 2,2s (1.2x sneller dan op Core i7-860)
+
+------------------------------------
+
+12;kleinerestatesramp (GPU);Afgebroken;0,00;0%;Korter pad, meer gelijktijdige taken.
+Test 12 - kleinerestatesramp (GPU)
+Korter pad, meer gelijktijdige taken.
+
+Invoer:
+(niet gestart)
+
+Uitvoer:
+(leeg)
+
+Tijd op GTX 750 Ti: 2,2s (1.2x sneller dan op Core i7-860)
+
+------------------------------------
+
+13;kleineramp (CPU);Afgebroken;0,00;0%;Meer heen en weer lopen.
+Test 13 - kleineramp (CPU)
+Meer heen en weer lopen.
+
+Invoer:
+(niet gestart)
+
+Uitvoer:
+(leeg)
+
+Tijd op GTX 750 Ti: 5,0s (2x langzamer dan op Core i7-860)
+
+------------------------------------
+
+14;kleineramp (GPU);Afgebroken;0,00;0%;Meer heen en weer lopen.
+Test 14 - kleineramp (GPU)
+Meer heen en weer lopen.
+
+Invoer:
+(niet gestart)
+
+Uitvoer:
+(leeg)
+
+Tijd op GTX 750 Ti: 5,0s (2x langzamer dan op Core i7-860)
+
+------------------------------------
+
+15;kleinestatesramp (CPU);Afgebroken;0,00;0%;Korter pad, meer gelijktijdige taken.
+Test 15 - kleinestatesramp (CPU)
+Korter pad, meer gelijktijdige taken.
+
+Invoer:
+(niet gestart)
+
+Uitvoer:
+(leeg)
+
+Tijd op GTX 750 Ti: 3,8s (2.4x sneller dan op Core i7-860)
+
+------------------------------------
+
+16;kleinestatesramp (GPU);Afgebroken;0,00;0%;Korter pad, meer gelijktijdige taken.
+Test 16 - kleinestatesramp (GPU)
+Korter pad, meer gelijktijdige taken.
+
+Invoer:
+(niet gestart)
+
+Uitvoer:
+(leeg)
+
+Tijd op GTX 750 Ti: 3,8s (2.4x sneller dan op Core i7-860)
+
+------------------------------------
+
+17;exp10 (CPU);Afgebroken;0,00;0%;Exponentieel met 10 switches.
+Test 17 - exp10 (CPU)
+Exponentieel met 10 switches.
+
+Invoer:
+(niet gestart)
+
+Uitvoer:
+(leeg)
+
+Tijd op GTX 750 Ti: 2,9s (14x sneller dan op Core i7-860)
+
+------------------------------------
+
+18;exp10 (GPU);Afgebroken;0,00;0%;Exponentieel met 10 switches.
+Test 18 - exp10 (GPU)
+Exponentieel met 10 switches.
+
+Invoer:
+(niet gestart)
+
+Uitvoer:
+(leeg)
+
+Tijd op GTX 750 Ti: 2,9s (14x sneller dan op Core i7-860)
+
+Microsoft Windows NT 6.2.9200.0 (x64)
+.NET version: 4.0.30319.42000
+4 physical core(s), 8 virtual core(s) (hyperthreading), 1 processor(s)
