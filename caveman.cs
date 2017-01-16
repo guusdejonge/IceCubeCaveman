@@ -192,7 +192,19 @@ class Caveman
 			// verwerk alle posities die nog geevalueerd moeten worden (in pos_in, aantal is N_in)
 			if (Program.GPU)
 			{
+                    //N_uit = 0;
                     // TODO: gpgpu versie
+                    //Console.WriteLine("GPU!");
+                    Program.kernel.SetMemoryArgument(0, pos_inBuffer);                      // stel de parameter in
+                    long[] workSize = { 512, 512 };                                         // totaal aantal taken
+                    long[] localSize = { 32, 4 };								            // threads per workgroup
+                    Program.queue.Execute(Program.kernel, null, workSize, null, null);      // voer de kernel uit
+                    Program.queue.ReadFromBuffer(pos_inBuffer, ref data, true, null);		// haal de data terug
+
+
+                    if (data[0] == 76){
+                        Console.WriteLine("ja");
+                    }
             }
 			else
 			{

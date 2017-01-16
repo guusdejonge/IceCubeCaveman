@@ -83,7 +83,7 @@ class Program
 		else
 		{ 
 			// default parameters
-			GPU = false;
+			GPU = true;
 			CLPlatform = 0;
 			Output = true;
 			mapFile = "../../maps/Polar1.in";
