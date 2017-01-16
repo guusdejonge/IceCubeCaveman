@@ -95,22 +95,7 @@ class Program
 			// initialiseer OpenCL
 			InitCL();
 
-			// test of OpenCL goed geinitialiseerd is
-			kernel.SetMemoryArgument( 0, buffer );						// stel de parameter in
-			long [] workSize = { 512, 512 };							// totaal aantal taken
-			long [] localSize = { 32, 4 };								// threads per workgroup
-			queue.Execute( kernel, null, workSize, null, null );		// voer de kernel uit
-			queue.ReadFromBuffer( buffer, ref data, true, null );		// haal de data terug
-			if (data[1] == 111)
-			{
-				// alles is goed gegaan
-				Console.Write( "OpenCL code succesvol uitgevoerd.\n" );
-			}
-			else
-			{
-				// OpenCL code is niet correct uitgevoerd
-				Console.Write( "OpenCL code niet succesvol uitgevoerd.\n" );
-			}
+			
 
 			// start de solver
 			Caveman c = new Caveman( mapFile );

@@ -99,7 +99,7 @@ class Caveman
     int b, h, tt;		// Breedte, Hoogte, typen Toverschotsen
     int start;			// Gegeven startconfiguratie
     char[,] veld;		// Kaart van het eiland
-    char tc;			// Uitvoermodus (Length Path Animation), switch color
+    int tc;			// Uitvoermodus (Length Path Animation), switch color
 
 	static Stopwatch timer = new Stopwatch();
 
@@ -124,7 +124,7 @@ class Caveman
 		h = Int32.Parse(line[1]);
 		tt = Int32.Parse(line[2]);
 		// Deze implementatie kan zowel blauwe als gele schotsen aan met 5e parameter.
-		if (line.Length > 4 && line[4] == "Y") tc = 'Y'; else tc = 'B';
+		if (line.Length > 4 && line[4] == "Y") tc = 1; else tc = 2;                         //Y wordt 1, B wordt 2
 		Console.Write( "map: " + file + " (" + b + " x " + h + ", type " + tc + ")\n" );
 
 		// Nu komt de kaart; let op, Y is een X met Caveman
@@ -184,23 +184,22 @@ class Caveman
         
         int[] data = new int[N_in];
         data = pos_in.Take(N_in).ToArray();
-        var flags = ComputeMemoryFlags.WriteOnly | ComputeMemoryFlags.UseHostPointer;
-        ComputeBuffer<int> pos_inBuffer = new ComputeBuffer<int>(Program.context, flags, data);
-            
+
+        var flagwrite = ComputeMemoryFlags.WriteOnly | ComputeMemoryFlags.UseHostPointer;
+
+        ComputeBuffer<int> pos_inBuffer = new ComputeBuffer<int>(Program.context, flagwrite, data); 
+
         while (true)
 		{
 			// verwerk alle posities die nog geevalueerd moeten worden (in pos_in, aantal is N_in)
 			if (Program.GPU)
 			{
-                    //N_uit = 0;
-                    // TODO: gpgpu versie
-                    //Console.WriteLine("GPU!");
                     Program.kernel.SetMemoryArgument(0, pos_inBuffer);                      // stel de parameter in
+                    Program.kernel.SetValueArgument<int>(1, (int)tc);                       // stel de parameter in
                     long[] workSize = { 512, 512 };                                         // totaal aantal taken
                     long[] localSize = { 32, 4 };								            // threads per workgroup
                     Program.queue.Execute(Program.kernel, null, workSize, null, null);      // voer de kernel uit
                     Program.queue.ReadFromBuffer(pos_inBuffer, ref data, true, null);		// haal de data terug
-
 
                     if (data[0] == 76){
                         Console.WriteLine("ja");
@@ -271,7 +270,7 @@ class Caveman
     private List<int> Adj(int p)
     {
         // Kies tussen de Adj fschakelaarsie voor Yellow of Blue switches 
-        if (tc == 'Y') return YAdj(p); else return BAdj(p);
+        if (tc == 1) return YAdj(p); else return BAdj(p);
     }
 
     // Yellow switch: werkt als je ligt of staat
