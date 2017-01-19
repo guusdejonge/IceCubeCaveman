@@ -11,8 +11,8 @@ int schakelaars(int p) { return (p / 262144); }
 
 void Yadj(int p, __local int* opties)
 {
-	//int i = xpositie(p); int j = ypositie(p);
-    //int s = richting(p); int t = schakelaars(p);
+	int i = xpositie(p); int j = ypositie(p);
+    int s = richting(p); int t = schakelaars(p);
 
 
 }
