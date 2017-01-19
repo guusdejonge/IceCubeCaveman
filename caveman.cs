@@ -204,6 +204,10 @@ class Caveman
                     if (data[0] == 76){
                         Console.WriteLine("ja");
                     }
+                    else
+                    {
+                        Console.WriteLine("nee");
+                    }
             }
 			else
 			{
