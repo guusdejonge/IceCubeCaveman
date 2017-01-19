@@ -94,373 +94,383 @@ using System.Linq;
 namespace Caveman
 {
 
-class Caveman
-{
-    int b, h, tt;		// Breedte, Hoogte, typen Toverschotsen
-    int start;			// Gegeven startconfiguratie
-    char[,] veld;		// Kaart van het eiland
-    int tc;			// Uitvoermodus (Length Path Animation), switch color
-
-	static Stopwatch timer = new Stopwatch();
-
-	const int NMAX = 16384 * 4;
-	const int SCHAKELAARS = 12;				// nodig voor dyn1.in; array gezien wordt 32Mb
-
-	int[] pos_in = new int[NMAX];			// array met posities die nog geevalueerd moeten worden (32Kb)
-	int[] pos_uit = new int[NMAX];			// array met posities voor de volgende ronde (32Kb)
-	int N_in;								// aantal te evalueren posities
-	int N_uit;								// aantal nieuwe posities
-	uint[] gezien = new uint[8192 * (1 << SCHAKELAARS)]; // bit field
-    uint[] prevmove = new uint[2 * 8192 * (1 << SCHAKELAARS)]; // bit field
-
-	public Caveman( string file )
+    class Caveman
     {
-		// Lees de invoer in volgens de specificatie
-		// Eerste regel heeft b, h, tt, m
-		string[] lines = System.IO.File.ReadAllLines( file );
-		string[] line = lines[0].Split( ' ' );
-		// string[] line = { "8", "5", "0", "P" }; // Console.ReadLine().Split(' ');
-		b = Int32.Parse(line[0]);
-		h = Int32.Parse(line[1]);
-		tt = Int32.Parse(line[2]);
-		// Deze implementatie kan zowel blauwe als gele schotsen aan met 5e parameter.
-		if (line.Length > 4 && line[4] == "Y") tc = 1; else tc = 2;                         //Y wordt 1, B wordt 2
-		Console.Write( "map: " + file + " (" + b + " x " + h + ", type " + tc + ")\n" );
+        int b, h, tt;       // Breedte, Hoogte, typen Toverschotsen
+        int start;          // Gegeven startconfiguratie
+        char[,] veld;       // Kaart van het eiland
+        int tc;         // Uitvoermodus (Length Path Animation), switch color
 
-		// Nu komt de kaart; let op, Y is een X met Caveman
-		veld = new char[b,h];
-		for (int j = 0; j < h; j++)
-		{
-			string l = lines[j + 1];
-			for (int i = 0; i < b; i++) if (l[i] == 'Y')
-			{
-				start = code(i, j, 1, 0);  // 1 = staand, 0 = tover open
-				veld[i, j] = 'X';
-			}
-			else veld[i, j] = l[i];
-		}
-	}
+        static Stopwatch timer = new Stopwatch();
 
-	private bool IsGezien( int c )
-	{
-		int idx = c >> 5;
-		uint mask = 1U << (c & 31);
-		return (gezien[idx] & mask) != 0;
-	}
+        const int NMAX = 16384 * 4;
+        const int SCHAKELAARS = 12;             // nodig voor dyn1.in; array gezien wordt 32Mb
 
-	private void Gezien( int c )
-	{
-		int idx = c >> 5;
-		uint mask = 1U << (c & 31);
-		gezien[idx] |= mask;
-	}
+        int[] pos_in = new int[NMAX];           // array met posities die nog geevalueerd moeten worden (32Kb)
+        int[] pos_uit = new int[NMAX];          // array met posities voor de volgende ronde (32Kb)
+        int N_in;                               // aantal te evalueren posities
+        int N_uit;                              // aantal nieuwe posities
+        uint[] gezien = new uint[8192 * (1 << SCHAKELAARS)]; // bit field
+        uint[] prevmove = new uint[2 * 8192 * (1 << SCHAKELAARS)]; // bit field
 
-    private void SetMove(int c, int m)
-    {
-        int idx = c >> 4;
-        uint mask = ((uint)m) << (2 * (c & 15));
-        prevmove[idx] |= mask;
-    }
+        public Caveman(string file)
+        {
+            // Lees de invoer in volgens de specificatie
+            // Eerste regel heeft b, h, tt, m
+            string[] lines = System.IO.File.ReadAllLines(file);
+            string[] line = lines[0].Split(' ');
+            // string[] line = { "8", "5", "0", "P" }; // Console.ReadLine().Split(' ');
+            b = Int32.Parse(line[0]);
+            h = Int32.Parse(line[1]);
+            tt = Int32.Parse(line[2]);
+            // Deze implementatie kan zowel blauwe als gele schotsen aan met 5e parameter.
+            if (line.Length > 4 && line[4] == "Y") tc = 1; else tc = 2;                         //Y wordt 1, B wordt 2
+            Console.Write("map: " + file + " (" + b + " x " + h + ", type " + tc + ")\n");
 
-    private int GetMove(int c)
-    {
-        int idx = c >> 4;
-        uint mask = 3U << (2 * (c & 15));
-        return (int)((prevmove[idx] & mask) >> (2 * (c & 15)));
-    }
+            // Nu komt de kaart; let op, Y is een X met Caveman
+            veld = new char[b, h];
+            for (int j = 0; j < h; j++)
+            {
+                string l = lines[j + 1];
+                for (int i = 0; i < b; i++) if (l[i] == 'Y')
+                    {
+                        start = code(i, j, 1, 0);  // 1 = staand, 0 = tover open
+                        veld[i, j] = 'X';
+                    }
+                    else veld[i, j] = l[i];
+            }
+        }
 
-    public void BFS()
-    {
-		// initialiseer wavefront search
-		N_in = 1; // alleen de beginpositie
-		pos_in[0] = start;
-		Gezien( start );
-		int stappen = 0;
-		int meesteOpties = 0;
-		int oplossing = -1;
+        private bool IsGezien(int c)
+        {
+            int idx = c >> 5;
+            uint mask = 1U << (c & 31);
+            return (gezien[idx] & mask) != 0;
+        }
 
-		timer.Reset();
-		timer.Start();
-        
-        int[] data = new int[N_in];
-        data = pos_in.Take(N_in).ToArray();
+        private void Gezien(int c)
+        {
+            int idx = c >> 5;
+            uint mask = 1U << (c & 31);
+            gezien[idx] |= mask;
+        }
 
-        var flagwrite = ComputeMemoryFlags.WriteOnly | ComputeMemoryFlags.UseHostPointer;
+        private void SetMove(int c, int m)
+        {
+            int idx = c >> 4;
+            uint mask = ((uint)m) << (2 * (c & 15));
+            prevmove[idx] |= mask;
+        }
 
-        ComputeBuffer<int> pos_inBuffer = new ComputeBuffer<int>(Program.context, flagwrite, data); 
+        private int GetMove(int c)
+        {
+            int idx = c >> 4;
+            uint mask = 3U << (2 * (c & 15));
+            return (int)((prevmove[idx] & mask) >> (2 * (c & 15)));
+        }
 
-        while (true)
-		{
-			// verwerk alle posities die nog geevalueerd moeten worden (in pos_in, aantal is N_in)
-			if (Program.GPU)
-			{
+        public void BFS()
+        {
+            // initialiseer wavefront search
+            N_in = 1; // alleen de beginpositie
+            pos_in[0] = start;
+            Gezien(start);
+            int stappen = 0;
+            int meesteOpties = 0;
+            int oplossing = -1;
+
+            timer.Reset();
+            timer.Start();
+
+            int[] data = new int[N_in];
+            data = pos_in.Take(N_in).ToArray();
+
+            int[] pa = new int[N_in * 4];
+
+            var flagwrite = ComputeMemoryFlags.WriteOnly | ComputeMemoryFlags.UseHostPointer;
+
+            ComputeBuffer<int> pos_inBuffer = new ComputeBuffer<int>(Program.context, flagwrite, pos_in);
+            ComputeBuffer<int> paBuffer = new ComputeBuffer<int>(Program.context, flagwrite, pa);
+
+
+            while (true)
+            {
+                // verwerk alle posities die nog geevalueerd moeten worden (in pos_in, aantal is N_in)
+                if (Program.GPU)
+                {
                     Program.kernel.SetMemoryArgument(0, pos_inBuffer);                      // stel de parameter in
-                    Program.kernel.SetValueArgument<int>(1, (int)tc);                       // stel de parameter in
+                    Program.kernel.SetMemoryArgument(1, paBuffer);                          // stel de parameter in
+                    Program.kernel.SetValueArgument<int>(2, (int)tc);                       // stel de parameter in
+                    Program.kernel.SetValueArgument<int>(3, (int)N_in);                     // stel de parameter in
+
                     long[] workSize = { 512, 512 };                                         // totaal aantal taken
                     long[] localSize = { 32, 4 };								            // threads per workgroup
                     Program.queue.Execute(Program.kernel, null, workSize, null, null);      // voer de kernel uit
-                    Program.queue.ReadFromBuffer(pos_inBuffer, ref data, true, null);		// haal de data terug
+                    Program.queue.ReadFromBuffer(pos_inBuffer, ref pos_in, true, null);		// haal de data terug
 
-                    if (data[0] == 76){
+
+
+                    if (data[0] == 76)
+                    {
                         Console.WriteLine("ja");
                     }
                     else
                     {
                         Console.WriteLine("nee");
                     }
+                }
+                else
+                {
+                    // cpu versie
+                    N_uit = 0;
+                    for (int i = 0; i < N_in; i++)
+                    {
+                        int p = pos_in[i];
+                        List<int> opties = Adj(p);
+                        foreach (int v in opties) if (!IsGezien(v))
+                            {
+                                pos_uit[N_uit] = v;
+                                // maak het bitpatroon voor de stack
+                                int bits = 0;
+                                if (xpositie(v) > xpositie(p)) bits = 0; // naar rechts gegaan
+                                if (xpositie(v) < xpositie(p)) bits = 1; // naar links gegaan
+                                if (ypositie(v) < ypositie(p)) bits = 2; // naar boven gegaan
+                                if (ypositie(v) > ypositie(p)) bits = 3; // naar beneden gegaan
+                                                                         // sla het bitpatroon op
+                                SetMove(v, bits);
+                                // markeer deze state als 'gezien'
+                                Gezien(v);
+                                // check, misschien zijn we er al
+                                if (good(v)) oplossing = v;
+                                N_uit++;
+                            }
+                    }
+                    if (oplossing > -1) break;  // correct pad gevonden; klaar
+                    if (N_uit == 0) break;      // geen oplossing
+                                                // kopieer pos_uit naar pos_in voor de volgende ronde
+                    if (N_uit > meesteOpties) meesteOpties = N_uit;
+                    N_in = N_uit;
+                    for (int i = 0; i < N_uit; i++) pos_in[i] = pos_uit[i];
+                }
+                stappen++;
             }
-			else
-			{
-				// cpu versie
-				N_uit = 0;
-				for( int i = 0; i < N_in; i++ )
-				{
-					int p = pos_in[i];
-					List<int> opties = Adj( p );
-					foreach (int v in opties) if (!IsGezien( v ))
-					{
-						pos_uit[N_uit] = v;
-						// maak het bitpatroon voor de stack
-						int bits = 0;
-						if (xpositie(v) > xpositie(p)) bits = 0; // naar rechts gegaan
-						if (xpositie(v) < xpositie(p)) bits = 1; // naar links gegaan
-						if (ypositie(v) < ypositie(p)) bits = 2; // naar boven gegaan
-						if (ypositie(v) > ypositie(p)) bits = 3; // naar beneden gegaan
-						// sla het bitpatroon op
-                        SetMove( v, bits );
-						// markeer deze state als 'gezien'
-                        Gezien( v );
-						// check, misschien zijn we er al
-						if (good( v )) oplossing = v;
-						N_uit++;
-					}
-				}
-				if (oplossing > -1) break;	// correct pad gevonden; klaar
-				if (N_uit == 0) break;		// geen oplossing
-				// kopieer pos_uit naar pos_in voor de volgende ronde
-				if (N_uit > meesteOpties) meesteOpties = N_uit;
-				N_in = N_uit;
-				for( int i = 0; i < N_uit; i++ ) pos_in[i] = pos_uit[i];
-			}
-			stappen++;
-		}
 
-		// verstreken tijd
-		Console.Write( "tijd: " + timer.ElapsedMilliseconds + "ms (" + (Program.GPU ? "GPU" : "CPU") + "), " + (stappen + 1) + " stappen:\n" );
-        
-		// decodeer oplossing
-		string[] code = { "R", "L", "U", "D" };
-        string result = "";
-		for( int i = 0; i <= stappen; i++ )
-		{
-            if (richting(oplossing) == 1) oplossing = this.code(xpositie(oplossing), ypositie(oplossing), 1, sw(xpositie(oplossing), ypositie(oplossing), schakelaars(oplossing)));
-            int bits = GetMove(oplossing);
-            if (richting(oplossing) == 1) oplossing = this.code(xpositie(oplossing), ypositie(oplossing), 1, sw(xpositie(oplossing), ypositie(oplossing), schakelaars(oplossing)));
-            result = code[bits] + result;
-            foreach (int p in Adj(oplossing))
+            // verstreken tijd
+            Console.Write("tijd: " + timer.ElapsedMilliseconds + "ms (" + (Program.GPU ? "GPU" : "CPU") + "), " + (stappen + 1) + " stappen:\n");
+
+            // decodeer oplossing
+            string[] code = { "R", "L", "U", "D" };
+            string result = "";
+            for (int i = 0; i <= stappen; i++)
             {
-                if (xpositie(oplossing) > xpositie(p) && bits == 0) { oplossing = p; break; }
-                if (xpositie(oplossing) < xpositie(p) && bits == 1) { oplossing = p; break; }
-                if (ypositie(oplossing) < ypositie(p) && bits == 2) { oplossing = p; break; }
-                if (ypositie(oplossing) > ypositie(p) && bits == 3) { oplossing = p; break; }
+                if (richting(oplossing) == 1) oplossing = this.code(xpositie(oplossing), ypositie(oplossing), 1, sw(xpositie(oplossing), ypositie(oplossing), schakelaars(oplossing)));
+                int bits = GetMove(oplossing);
+                if (richting(oplossing) == 1) oplossing = this.code(xpositie(oplossing), ypositie(oplossing), 1, sw(xpositie(oplossing), ypositie(oplossing), schakelaars(oplossing)));
+                result = code[bits] + result;
+                foreach (int p in Adj(oplossing))
+                {
+                    if (xpositie(oplossing) > xpositie(p) && bits == 0) { oplossing = p; break; }
+                    if (xpositie(oplossing) < xpositie(p) && bits == 1) { oplossing = p; break; }
+                    if (ypositie(oplossing) < ypositie(p) && bits == 2) { oplossing = p; break; }
+                    if (ypositie(oplossing) > ypositie(p) && bits == 3) { oplossing = p; break; }
+                }
             }
+            if (Program.Output) Console.Write(result);
+
+            // rapporteer potential parallelism
+            Console.Write("\nmaximum aantal taken: " + meesteOpties + ".\n");
         }
-        if (Program.Output) Console.Write(result);
 
-		// rapporteer potential parallelism
-		Console.Write( "\nmaximum aantal taken: " + meesteOpties + ".\n" );
-    }
-
-    private List<int> Adj(int p)
-    {
-        // Kies tussen de Adj fschakelaarsie voor Yellow of Blue switches 
-        if (tc == 1) return YAdj(p); else return BAdj(p);
-    }
-
-    // Yellow switch: werkt als je ligt of staat
-    // Blue switch: werkt alleen bij staan.
-    // Bij gemengde types moet je aan de fschakelaarsie sw mee geven of je ligt of staat
-
-    // Hieronder volgt de Y-Adj voor een eiland met Yellow
-
-    private List<int> YAdj(int p)
-    {
-        // Wat zijn de opvolgers van state p??
-        List<int> pa = new List<int>();
-        // Decodeer de state
-        int i = xpositie(p); int j = ypositie(p);
-        int s = richting(p); int t = schakelaars(p);
-        switch (s)
+        private List<int> Adj(int p)
         {
-            case 1:  // Cave staat rechtop op i,j
-                // Kan ik naar Rechts?  Ik ga dan EW-liggen op i+1,j
-                if (step(i+1, j, false, t) && step(i+2, j, false, t)) 
-                    pa.Add(code(i+1, j, 3, sw(i+1,j,sw(i+2,j,t))));
-
-                // Kan ik naar Links?  Ik ga dan EW-liggen op i-2,j
-                if (step(i-1, j, false, t) && step(i-2, j, false, t)) 
-                    pa.Add(code(i-2, j, 3, sw(i-2,j,sw(i-1,j,t))));
-
-                // Kan ik omhoog?  Ik ga dan NZ-liggen op i,j-2
-                if (step(i, j-2, false, t) && step(i, j-1, false, t)) 
-                    pa.Add(code(i, j-2, 2, sw(i,j-2,sw(i,j-1,t))));
-
-                // Kan ik omlaag?  Ik ga dan NZ-liggen op i,j+1
-                if (step(i, j+1, false, t) && step(i, j+2, false, t)) 
-                    pa.Add(code(i, j+1, 2, sw(i,j+1,sw(i,j+2,t))));
-                break;
-
-            case 2:  // Cave ligt NZ op i,j (dwz pos i,j en i,j+1)
-                // Kan ik naar rechts, NZlig op i+1,j 
-                if (step(i + 1, j, false, t) && step(i + 1, j + 1, false, t)) 
-                    pa.Add(code(i + 1, j, 2, sw(i + 1, j, sw(i + 1, j + 1, t))));
-
-                // Kan ik naar Links, NZ liggen op i-1,j
-                if (step(i - 1, j, false, t) && step(i - 1, j + 1, false, t))
-                    pa.Add(code(i - 1, j, 2, sw(i - 1, j, sw(i - 1, j + 1, t))));
-
-                // Kan ik naar boven, staan op i,j-1
-                if (step(i, j-1, true, t))
-                    pa.Add(code(i, j-1, 1, sw(i,j-1,t)));
-
-                // Kan ik naar beneden, staan op i, j+2
-                if (step(i, j + 2, true, t))
-                    pa.Add(code(i, j + 2, 1, sw(i, j + 2, t)));
-                break;
-
-            case 3:  // Cave ligt EW op i,j (dwz bezet i,j en i+1,j)
-                // Kan ik naar rechts, gaan staan op i+2,j
-                if (step(i + 2, j, true, t))
-                    pa.Add(code(i + 2, j, 1, sw(i + 2, j, t)));
-
-                // Kan ik naar links, staan op i-1,j
-                if (step(i - 1, j, true, t))
-                    pa.Add(code(i - 1, j, 1, sw(i - 1, j, t)));
-
-                // Kan ik naar beneden, gaan EW-liggen op i,j+1
-                if (step(i, j + 1, false, t) && step(i + 1, j + 1, false, t))
-                    pa.Add(code(i, j + 1, 3, sw(i, j + 1, sw(i + 1, j + 1, t))));
-
-                // Kan ik omhoog, gaan EW-liggen op i,j-1
-                if (step(i, j - 1, false, t) && step(i + 1, j - 1, false, t))
-                    pa.Add(code(i, j - 1, 3, sw(i, j - 1, sw(i + 1, j - 1, t))));
-                break;
-            default: break;
+            // Kies tussen de Adj fschakelaarsie voor Yellow of Blue switches 
+            if (tc == 1) return YAdj(p); else return BAdj(p);
         }
-        return pa;
-    }
 
-    // Hieronder volgt de B-Adj voor een eiland met Blue
-    private List<int> BAdj(int p)
-    {
-        // Wat zijn de opvolgers van state p??
-        List<int> pa = new List<int>();
-        // Decodeer de state
-        int i = xpositie(p); int j = ypositie(p);
-        int s = richting(p); int t = schakelaars(p);
-        switch (s)
+        // Yellow switch: werkt als je ligt of staat
+        // Blue switch: werkt alleen bij staan.
+        // Bij gemengde types moet je aan de fschakelaarsie sw mee geven of je ligt of staat
+
+        // Hieronder volgt de Y-Adj voor een eiland met Yellow
+
+        private List<int> YAdj(int p)
         {
-            // We zitten hier met blauwe switches, die doen niets als je er
-            // op gaat liggen.  Dus alleen in de staande nieuwe posities
-            // wordt sw meegenomen.
-            case 1:  // Cave staat rechtop op i,j
-                // Kan ik naar Rechts?  Ik ga dan EW-liggen op i+1,j
-                if (step(i + 1, j, false, t) && step(i + 2, j, false, t))
-                    pa.Add(code(i + 1, j, 3, t));
+            // Wat zijn de opvolgers van state p??
+            List<int> pa = new List<int>();
+            // Decodeer de state
+            int i = xpositie(p); int j = ypositie(p);
+            int s = richting(p); int t = schakelaars(p);
+            switch (s)
+            {
+                case 1:  // Cave staat rechtop op i,j
+                         // Kan ik naar Rechts?  Ik ga dan EW-liggen op i+1,j
+                    if (step(i + 1, j, false, t) && step(i + 2, j, false, t))
+                        pa.Add(code(i + 1, j, 3, sw(i + 1, j, sw(i + 2, j, t))));
 
-                // Kan ik naar Links?  Ik ga dan EW-liggen op i-2,j
-                if (step(i - 1, j, false, t) && step(i - 2, j, false, t))
-                    pa.Add(code(i - 2, j, 3, t));
+                    // Kan ik naar Links?  Ik ga dan EW-liggen op i-2,j
+                    if (step(i - 1, j, false, t) && step(i - 2, j, false, t))
+                        pa.Add(code(i - 2, j, 3, sw(i - 2, j, sw(i - 1, j, t))));
 
-                // Kan ik omhoog?  Ik ga dan NZ-liggen op i,j-2
-                if (step(i, j - 2, false, t) && step(i, j - 1, false, t))
-                    pa.Add(code(i, j - 2, 2, t));
+                    // Kan ik omhoog?  Ik ga dan NZ-liggen op i,j-2
+                    if (step(i, j - 2, false, t) && step(i, j - 1, false, t))
+                        pa.Add(code(i, j - 2, 2, sw(i, j - 2, sw(i, j - 1, t))));
 
-                // Kan ik omlaag?  Ik ga dan NZ-liggen op i,j+1
-                if (step(i, j + 1, false, t) && step(i, j + 2, false, t))
-                    pa.Add(code(i, j + 1, 2, t));
-                break;
+                    // Kan ik omlaag?  Ik ga dan NZ-liggen op i,j+1
+                    if (step(i, j + 1, false, t) && step(i, j + 2, false, t))
+                        pa.Add(code(i, j + 1, 2, sw(i, j + 1, sw(i, j + 2, t))));
+                    break;
 
-            case 2:  // Cave ligt NZ op i,j (dwz pos i,j en i,j+1)
-                // Kan ik naar rechts, NZlig op i+1,j 
-                if (step(i + 1, j, false, t) && step(i + 1, j + 1, false, t))
-                    pa.Add(code(i + 1, j, 2, t));
+                case 2:  // Cave ligt NZ op i,j (dwz pos i,j en i,j+1)
+                         // Kan ik naar rechts, NZlig op i+1,j 
+                    if (step(i + 1, j, false, t) && step(i + 1, j + 1, false, t))
+                        pa.Add(code(i + 1, j, 2, sw(i + 1, j, sw(i + 1, j + 1, t))));
 
-                // Kan ik naar Links, NZ liggen op i-1,j
-                if (step(i - 1, j, false, t) && step(i - 1, j + 1, false, t))
-                    pa.Add(code(i - 1, j, 2, t));
+                    // Kan ik naar Links, NZ liggen op i-1,j
+                    if (step(i - 1, j, false, t) && step(i - 1, j + 1, false, t))
+                        pa.Add(code(i - 1, j, 2, sw(i - 1, j, sw(i - 1, j + 1, t))));
 
-                // Kan ik naar boven, staan op i,j-1
-                if (step(i, j - 1, true, t))
-                    pa.Add(code(i, j - 1, 1, sw(i, j - 1, t)));
+                    // Kan ik naar boven, staan op i,j-1
+                    if (step(i, j - 1, true, t))
+                        pa.Add(code(i, j - 1, 1, sw(i, j - 1, t)));
 
-                // Kan ik naar beneden, staan op i, j+2
-                if (step(i, j + 2, true, t))
-                    pa.Add(code(i, j + 2, 1, sw(i, j + 2, t)));
-                break;
+                    // Kan ik naar beneden, staan op i, j+2
+                    if (step(i, j + 2, true, t))
+                        pa.Add(code(i, j + 2, 1, sw(i, j + 2, t)));
+                    break;
 
-            case 3:  // Cave ligt EW op i,j (dwz bezet i,j en i+1,j)
-                // Kan ik naar rechts, gaan staan op i+2,j
-                if (step(i + 2, j, true, t))
-                    pa.Add(code(i + 2, j, 1, sw(i + 2, j, t)));
+                case 3:  // Cave ligt EW op i,j (dwz bezet i,j en i+1,j)
+                         // Kan ik naar rechts, gaan staan op i+2,j
+                    if (step(i + 2, j, true, t))
+                        pa.Add(code(i + 2, j, 1, sw(i + 2, j, t)));
 
-                // Kan ik naar links, staan op i-1,j
-                if (step(i - 1, j, true, t))
-                    pa.Add(code(i - 1, j, 1, sw(i - 1, j, t)));
+                    // Kan ik naar links, staan op i-1,j
+                    if (step(i - 1, j, true, t))
+                        pa.Add(code(i - 1, j, 1, sw(i - 1, j, t)));
 
-                // Kan ik naar beneden, gaan EW-liggen op i,j+1
-                if (step(i, j + 1, false, t) && step(i + 1, j + 1, false, t))
-                    pa.Add(code(i, j + 1, 3, t));
+                    // Kan ik naar beneden, gaan EW-liggen op i,j+1
+                    if (step(i, j + 1, false, t) && step(i + 1, j + 1, false, t))
+                        pa.Add(code(i, j + 1, 3, sw(i, j + 1, sw(i + 1, j + 1, t))));
 
-                // Kan ik omhoog, gaan EW-liggen op i,j-1
-                if (step(i, j - 1, false, t) && step(i + 1, j - 1, false, t))
-                    pa.Add(code(i, j - 1, 3, t));
-                break;
-            default: break;
+                    // Kan ik omhoog, gaan EW-liggen op i,j-1
+                    if (step(i, j - 1, false, t) && step(i + 1, j - 1, false, t))
+                        pa.Add(code(i, j - 1, 3, sw(i, j - 1, sw(i + 1, j - 1, t))));
+                    break;
+                default: break;
+            }
+            return pa;
         }
-        return pa;
-    }
 
-    private int sw(int x, int y, int t)
-    {
-        // Hoe verandert de toverschotsenstand als Caveman op x,y stapt?
-        if (veld[x, y] < 'A' || veld[x, y] > 'L')  // Dit is geen switch
-            return t; 
-        // XOR t met de bitpositie die je afleidt uit de geraakte switch
-        return t ^ (1 << ( (int)veld[x,y] - (int)'A' ));
-    }
+        // Hieronder volgt de B-Adj voor een eiland met Blue
+        private List<int> BAdj(int p)
+        {
+            // Wat zijn de opvolgers van state p??
+            List<int> pa = new List<int>();
+            // Decodeer de state
+            int i = xpositie(p); int j = ypositie(p);
+            int s = richting(p); int t = schakelaars(p);
+            switch (s)
+            {
+                // We zitten hier met blauwe switches, die doen niets als je er
+                // op gaat liggen.  Dus alleen in de staande nieuwe posities
+                // wordt sw meegenomen.
+                case 1:  // Cave staat rechtop op i,j
+                         // Kan ik naar Rechts?  Ik ga dan EW-liggen op i+1,j
+                    if (step(i + 1, j, false, t) && step(i + 2, j, false, t))
+                        pa.Add(code(i + 1, j, 3, t));
 
-    private bool step(int x, int y, bool ver, int T)
-    {
-        // Kan Caveman op tegel x,y als hij ver?staat:ligt en T is de set toegankelijke tovertegels
-        if (x < 0 || x >= b) return false;     // te ver links of rechts
-        if (y < 0 || y >= h) return false;     // te hoog of laag
-        if (veld[x, y] == '.') return false;   // mag niet in de zee
-        if (veld[x, y] == 'X') return true;    // stevige tegel, kan wel
-        if (veld[x, y] == 'Z') return true;    // vuur, kan wel
-        if (veld[x, y] == 'x') return !ver;    // zwakke schots, staan mag niet liggen wel
-        if (veld[x, y] >= 'A' &&
-            veld[x, y] <= 'L') return true;    // Schakelaar, kan wel
-        // Overgebleven case: toverschots, check in T
-        return (T & (1 << (veld[x, y] - 'a'))) != 0;
-    }
+                    // Kan ik naar Links?  Ik ga dan EW-liggen op i-2,j
+                    if (step(i - 1, j, false, t) && step(i - 2, j, false, t))
+                        pa.Add(code(i - 2, j, 3, t));
 
-    private bool good(int v)
-    {
-        // Toestand v is goed als eindstand als Caveman op vuur staat, rechtop
-        return (veld[xpositie(v), ypositie(v)] == 'Z' && richting(v) == 1);
-    }
+                    // Kan ik omhoog?  Ik ga dan NZ-liggen op i,j-2
+                    if (step(i, j - 2, false, t) && step(i, j - 1, false, t))
+                        pa.Add(code(i, j - 2, 2, t));
 
-    // Coderen van een state naar een int.
-    // x gaat in bit 0..7, y in 8..15, richting in 16..17, schakelaars in 18.. .
-    private int code(int x, int y, int richting, int schakelaars)
-    {
-        return (schakelaars << 18) + (richting << 16) + (y << 8) + x;
+                    // Kan ik omlaag?  Ik ga dan NZ-liggen op i,j+1
+                    if (step(i, j + 1, false, t) && step(i, j + 2, false, t))
+                        pa.Add(code(i, j + 1, 2, t));
+                    break;
+
+                case 2:  // Cave ligt NZ op i,j (dwz pos i,j en i,j+1)
+                         // Kan ik naar rechts, NZlig op i+1,j 
+                    if (step(i + 1, j, false, t) && step(i + 1, j + 1, false, t))
+                        pa.Add(code(i + 1, j, 2, t));
+
+                    // Kan ik naar Links, NZ liggen op i-1,j
+                    if (step(i - 1, j, false, t) && step(i - 1, j + 1, false, t))
+                        pa.Add(code(i - 1, j, 2, t));
+
+                    // Kan ik naar boven, staan op i,j-1
+                    if (step(i, j - 1, true, t))
+                        pa.Add(code(i, j - 1, 1, sw(i, j - 1, t)));
+
+                    // Kan ik naar beneden, staan op i, j+2
+                    if (step(i, j + 2, true, t))
+                        pa.Add(code(i, j + 2, 1, sw(i, j + 2, t)));
+                    break;
+
+                case 3:  // Cave ligt EW op i,j (dwz bezet i,j en i+1,j)
+                         // Kan ik naar rechts, gaan staan op i+2,j
+                    if (step(i + 2, j, true, t))
+                        pa.Add(code(i + 2, j, 1, sw(i + 2, j, t)));
+
+                    // Kan ik naar links, staan op i-1,j
+                    if (step(i - 1, j, true, t))
+                        pa.Add(code(i - 1, j, 1, sw(i - 1, j, t)));
+
+                    // Kan ik naar beneden, gaan EW-liggen op i,j+1
+                    if (step(i, j + 1, false, t) && step(i + 1, j + 1, false, t))
+                        pa.Add(code(i, j + 1, 3, t));
+
+                    // Kan ik omhoog, gaan EW-liggen op i,j-1
+                    if (step(i, j - 1, false, t) && step(i + 1, j - 1, false, t))
+                        pa.Add(code(i, j - 1, 3, t));
+                    break;
+                default: break;
+            }
+            return pa;
+        }
+
+        private int sw(int x, int y, int t)
+        {
+            // Hoe verandert de toverschotsenstand als Caveman op x,y stapt?
+            if (veld[x, y] < 'A' || veld[x, y] > 'L')  // Dit is geen switch
+                return t;
+            // XOR t met de bitpositie die je afleidt uit de geraakte switch
+            return t ^ (1 << ((int)veld[x, y] - (int)'A'));
+        }
+
+        private bool step(int x, int y, bool ver, int T)
+        {
+            // Kan Caveman op tegel x,y als hij ver?staat:ligt en T is de set toegankelijke tovertegels
+            if (x < 0 || x >= b) return false;     // te ver links of rechts
+            if (y < 0 || y >= h) return false;     // te hoog of laag
+            if (veld[x, y] == '.') return false;   // mag niet in de zee
+            if (veld[x, y] == 'X') return true;    // stevige tegel, kan wel
+            if (veld[x, y] == 'Z') return true;    // vuur, kan wel
+            if (veld[x, y] == 'x') return !ver;    // zwakke schots, staan mag niet liggen wel
+            if (veld[x, y] >= 'A' &&
+                veld[x, y] <= 'L') return true;    // Schakelaar, kan wel
+                                                   // Overgebleven case: toverschots, check in T
+            return (T & (1 << (veld[x, y] - 'a'))) != 0;
+        }
+
+        private bool good(int v)
+        {
+            // Toestand v is goed als eindstand als Caveman op vuur staat, rechtop
+            return (veld[xpositie(v), ypositie(v)] == 'Z' && richting(v) == 1);
+        }
+
+        // Coderen van een state naar een int.
+        // x gaat in bit 0..7, y in 8..15, richting in 16..17, schakelaars in 18.. .
+        private int code(int x, int y, int richting, int schakelaars)
+        {
+            return (schakelaars << 18) + (richting << 16) + (y << 8) + x;
+        }
+        private int xpositie(int p) { return p % 256; }
+        private int ypositie(int p) { return (p / 256) % 256; }
+        private int richting(int p) { return (p / 65536) % 4; }
+        private int schakelaars(int p) { return (p / 262144); }
     }
-    private int xpositie(int p) { return p % 256; }
-    private int ypositie(int p) { return (p / 256) % 256; }
-    private int richting(int p) { return (p / 65536) % 4; }
-    private int schakelaars(int p) { return (p / 262144); }
-}
 
 } // namespace Caveman
