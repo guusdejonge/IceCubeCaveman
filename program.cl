@@ -1,8 +1,9 @@
+
+
 int Testt()
 {
 return 76;
 }
-
 
 int xpositie(int p) { return p % 256; }
 int ypositie(int p) { return (p / 256) % 256; }
@@ -36,7 +37,7 @@ void Adj(int tc, int p, __local int* opties)
 
 __kernel void device_function( 
 	__global int* pos_in, __global int* pa,
-	int tc, int N_in )
+	int tc, int N_in, __global volatile int* N_uit)
 	{
 		//data[0]= Testt();
 
@@ -46,6 +47,20 @@ __kernel void device_function(
 			int p = pos_in[i];
 			Adj(tc, p, opties);
 		}
+
+		//__local uint *counter = 3;
+		//uint old_val = atomic_inc( counter );	//make atomic increment on it
+		//counter = counter + 1;
+
+		//N_uit[0] = counter;
+
+		if (N_uit[0] < N_in)
+		{
+			int oud = atomic_inc( &N_uit[0]);
+		}
+		
+
+
 
 		//Adj(tc, N_in, int* pos_in, int* pa);
 

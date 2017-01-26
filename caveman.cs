@@ -175,23 +175,26 @@ namespace Caveman
             N_in = 1; // alleen de beginpositie
             pos_in[0] = start;
             Gezien(start);
+            Console.WriteLine(pos_in[1]);
             int stappen = 0;
             int meesteOpties = 0;
             int oplossing = -1;
 
             timer.Reset();
             timer.Start();
-
-            int[] data = new int[N_in];
-            data = pos_in.Take(N_in).ToArray();
+            
 
             int[] pa = new int[N_in * 4];
+
+            int[] N_uitArray = new int[1];
+
 
             var flagwrite = ComputeMemoryFlags.WriteOnly | ComputeMemoryFlags.UseHostPointer;
 
             ComputeBuffer<int> pos_inBuffer = new ComputeBuffer<int>(Program.context, flagwrite, pos_in);
             ComputeBuffer<int> paBuffer = new ComputeBuffer<int>(Program.context, flagwrite, pa);
-
+            N_uitArray[0] = 0;
+            ComputeBuffer<int> N_uitBuffer = new ComputeBuffer<int>(Program.context, flagwrite, N_uitArray);
 
             while (true)
             {
@@ -202,14 +205,20 @@ namespace Caveman
                     Program.kernel.SetMemoryArgument(1, paBuffer);                          // stel de parameter in
                     Program.kernel.SetValueArgument<int>(2, (int)tc);                       // stel de parameter in
                     Program.kernel.SetValueArgument<int>(3, (int)N_in);                     // stel de parameter in
+                    
+                    Program.kernel.SetMemoryArgument(4, N_uitBuffer);                             // stel de parameter in
 
                     long[] workSize = { 512, 512 };                                         // totaal aantal taken
                     long[] localSize = { 32, 4 };								            // threads per workgroup
                     Program.queue.Execute(Program.kernel, null, workSize, null, null);      // voer de kernel uit
-                    Program.queue.ReadFromBuffer(pos_inBuffer, ref pos_in, true, null);		// haal de data terug
-
-
-
+                    Program.queue.ReadFromBuffer(pos_inBuffer, ref pos_in, true, null);     // haal de data terug
+                    Program.queue.ReadFromBuffer(N_uitBuffer, ref N_uitArray, true, null);		// haal de data terug
+                    Console.WriteLine(N_uitArray[0]);
+                    if  (N_uitArray[0] == 30000)
+                    {
+                        Console.WriteLine("ja");
+                    }
+                    /*
                     if (data[0] == 76)
                     {
                         Console.WriteLine("ja");
@@ -217,7 +226,7 @@ namespace Caveman
                     else
                     {
                         Console.WriteLine("nee");
-                    }
+                    }*/
                 }
                 else
                 {
