@@ -99,7 +99,7 @@ namespace Caveman
         int b, h, tt;       // Breedte, Hoogte, typen Toverschotsen
         int start;          // Gegeven startconfiguratie
         char[,] veld;       // Kaart van het eiland
-        int[,] gpuVeld;
+        int[] gpuVeld;
         int tc;         // Uitvoermodus (Length Path Animation), switch color
 
         static Stopwatch timer = new Stopwatch();
@@ -130,7 +130,7 @@ namespace Caveman
 
             // Nu komt de kaart; let op, Y is een X met Caveman
             veld = new char[b, h];
-            gpuVeld = new int[b, h];
+            gpuVeld = new int[b * h];
 
             for (int j = 0; j < h; j++)
             {
@@ -139,14 +139,14 @@ namespace Caveman
                     {
                         start = code(i, j, 1, 0);  // 1 = staand, 0 = tover open
                         veld[i, j] = 'X';
-                        gpuVeld[i, j] = (int)('X');
+                        gpuVeld[i+j*b] = (int)('X');
                     }
                     else
                     {
                         veld[i, j] = l[i];
                         char letter = (char)(l[i]);
                         
-                            gpuVeld[i, j] = (int)(letter);
+                            gpuVeld[i+j*b] = (int)(letter);
                     }
             }
             
@@ -197,7 +197,6 @@ namespace Caveman
 
             int[] pa = new int[N_in * 4];
 
-            int[] N_uitArray = new int[60];
 
 
             var flagwrite = ComputeMemoryFlags.WriteOnly | ComputeMemoryFlags.UseHostPointer;
@@ -205,6 +204,8 @@ namespace Caveman
             ComputeBuffer<int> pos_inBuffer = new ComputeBuffer<int>(Program.context, flagwrite, pos_in);
             ComputeBuffer<int> paBuffer = new ComputeBuffer<int>(Program.context, flagwrite, pa);
             ComputeBuffer<int> N_uitBuffer = new ComputeBuffer<int>(Program.context, flagwrite, pos_uit);
+            ComputeBuffer<int> veldBuffer = new ComputeBuffer<int>(Program.context, flagwrite, gpuVeld);
+
 
             while (true)
             {
@@ -215,8 +216,11 @@ namespace Caveman
                     Program.kernel.SetMemoryArgument(1, paBuffer);                          // stel de parameter in
                     Program.kernel.SetValueArgument<int>(2, (int)tc);                       // stel de parameter in
                     Program.kernel.SetValueArgument<int>(3, (int)N_in);                     // stel de parameter in
-                    
-                    Program.kernel.SetMemoryArgument(4, N_uitBuffer);                             // stel de parameter in
+                    Program.kernel.SetMemoryArgument(4, N_uitBuffer);                          // stel de parameter in
+                    Program.kernel.SetMemoryArgument(5, veldBuffer);                          // stel de parameter in
+                    Program.kernel.SetValueArgument<int>(6, (int)b);                     // stel de parameter in
+                    Program.kernel.SetValueArgument<int>(7, (int)h);                     // stel de parameter in
+
 
                     long[] workSize = { 512, 512 };                                         // totaal aantal taken
                     long[] localSize = { 32, 4 };								            // threads per workgroup
@@ -233,12 +237,12 @@ namespace Caveman
                         }
                     }
 
-                    for (int i = 0; i < gpuVeld.GetLength(1); i++)
+                    for (int i = 0; i <h; i++)
                     {
                         Console.WriteLine();
-                        for (int j = 0; j < gpuVeld.GetLength(0); j++)
+                        for (int j = 0; j <b; j++)
                         {
-                            Console.Write(gpuVeld[j, i]);
+                            Console.Write(gpuVeld[j+i*b]);
                         }
                     }
 

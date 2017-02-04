@@ -46,12 +46,7 @@ class Program
 		// lokaliseer de gewenste kernel in het programma
 		kernel = program.CreateKernel( "device_function" );
 		// alloceer data in RAM
-		data = new int[2];
-		data[0] = 999;		// OpenCL code gaat deze waarde testen
-		data[1] = 0;		// OpenCL code gaat dit vervangen door 111
-		// alloceer data op de GPU
-		var flags = ComputeMemoryFlags.WriteOnly | ComputeMemoryFlags.UseHostPointer;
-		buffer = new ComputeBuffer<int>( context, flags, data );
+		
 	}
 	// main functie
     static void Main(string[] args)
