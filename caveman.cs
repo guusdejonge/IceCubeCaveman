@@ -93,7 +93,6 @@ using System.Linq;
 
 namespace Caveman
 {
-
     class Caveman
     {
         int b, h, tt;       // Breedte, Hoogte, typen Toverschotsen
@@ -149,7 +148,6 @@ namespace Caveman
                             gpuVeld[i+j*b] = (int)(letter);
                     }
             }
-            
         }
 
         private bool IsGezien(int c)
@@ -186,7 +184,6 @@ namespace Caveman
             N_in = 1; // alleen de beginpositie
             pos_in[0] = start;
             Gezien(start);
-            Console.WriteLine(pos_in[1]);
             int stappen = 0;
             int meesteOpties = 0;
             int oplossing = -1;
@@ -194,10 +191,7 @@ namespace Caveman
             timer.Reset();
             timer.Start();
             
-
             int[] pa = new int[N_in * 4];
-
-
 
             var flagwrite = ComputeMemoryFlags.WriteOnly | ComputeMemoryFlags.UseHostPointer;
 
@@ -205,7 +199,6 @@ namespace Caveman
             ComputeBuffer<int> paBuffer = new ComputeBuffer<int>(Program.context, flagwrite, pa);
             ComputeBuffer<int> N_uitBuffer = new ComputeBuffer<int>(Program.context, flagwrite, pos_uit);
             ComputeBuffer<int> veldBuffer = new ComputeBuffer<int>(Program.context, flagwrite, gpuVeld);
-
 
             while (true)
             {
@@ -221,52 +214,33 @@ namespace Caveman
                     Program.kernel.SetValueArgument<int>(6, (int)b);                     // stel de parameter in
                     Program.kernel.SetValueArgument<int>(7, (int)h);                     // stel de parameter in
 
-
                     long[] workSize = { 512, 512 };                                         // totaal aantal taken
                     long[] localSize = { 32, 4 };								            // threads per workgroup
                     Program.queue.Execute(Program.kernel, null, workSize, null, null);      // voer de kernel uit
                     Program.queue.ReadFromBuffer(pos_inBuffer, ref pos_in, true, null);     // haal de data terug
-                    Program.queue.ReadFromBuffer(N_uitBuffer, ref pos_uit, true, null);		// haal de data terug
+                    Program.queue.ReadFromBuffer(N_uitBuffer, ref pos_uit, true, null);     // haal de data terug
 
+                    Console.WriteLine();
+                    Console.WriteLine("The map in chars:");
                     for (int i = 0; i < veld.GetLength(1); i++)
                     {
-                        Console.WriteLine();
                         for (int j = 0; j < veld.GetLength(0); j++)
                         {
                             Console.Write(veld[j, i]);
                         }
+                        Console.WriteLine();
                     }
 
+                    Console.WriteLine();
+                    Console.WriteLine("The map in ints:");
                     for (int i = 0; i <h; i++)
                     {
-                        Console.WriteLine();
                         for (int j = 0; j <b; j++)
                         {
                             Console.Write(gpuVeld[j+i*b]);
                         }
+                        Console.WriteLine();
                     }
-
-                    
-
-                    //Console.WriteLine(N_uitArray[0]);
-                    //for(int i = 0; i < pos_uit.Length; i++)
-                    //{
-                    //    //Console.WriteLine(i);
-                    //    Console.WriteLine(pos_uit[i]);
-                    //}
-                    //if  (N_uitArray[0] == 30000)
-                    //{
-                    //    Console.WriteLine("ja");
-                    //}
-                    /*
-                    if (data[0] == 76)
-                    {
-                        Console.WriteLine("ja");
-                    }
-                    else
-                    {
-                        Console.WriteLine("nee");
-                    }*/
                 }
                 else
                 {

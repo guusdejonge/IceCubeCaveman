@@ -89,9 +89,7 @@ class Program
 		{
 			// initialiseer OpenCL
 			InitCL();
-
-			
-
+            
 			// start de solver
 			Caveman c = new Caveman( mapFile );
 			c.BFS();

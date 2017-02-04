@@ -4,7 +4,7 @@ int ypositie(int p) { return (p / 256) % 256; }
 int richting(int p) { return (p / 65536) % 4; }
 int schakelaars(int p) { return (p / 262144); }
 
-bool step(int x, int y, bool ver, int T, __global int* veld, int b, int h) 
+bool __attribute__((overloadable)) step(int x, int y, bool ver, int T, __global int* veld, int b, int h) 
 	{
 		// Kan Caveman op tegel x,y als hij ver?staat:ligt en T is de set toegankelijke tovertegels
 		if (x < 0 || x >= b) return false;     // te ver links of rechts
@@ -67,36 +67,36 @@ void Yadj(int p, __local int* opties, __global int* veld, int b, int h)
                         //opties[1]=code(i - 1, j, 2, sw(i - 1, j, sw(i - 1, j + 1,t, veld, b, h)));
 
                     // Kan ik naar boven, staan op i,j-1
-                    if (step(i, j - 1, true,t, veld, b, h)
+                    if (step(i, j - 1, true,t, veld, b, h))
                        // opties[2]=code(i, j - 1, 1, sw(i, j - 1,t, veld, b, h));
 
                     // Kan ik naar beneden, staan op i, j+2
-                    if (step(i, j + 2, true,t, veld, b, h)
+                    if (step(i, j + 2, true,t, veld, b, h))
                         //opties[3]=code(i, j + 2, 1, sw(i, j + 2,t, veld, b, h));
                     break;
 
                 case 3:  // Cave ligt EW op i,j (dwz bezet i,j en i+1,j)
                          // Kan ik naar rechts, gaan staan op i+2,j
-                    if (step(i + 2, j, true,t, veld, b, h)
+                    if (step(i + 2, j, true,t, veld, b, h))
                         //opties[0]=code(i + 2, j, 1, sw(i + 2, j,t, veld, b, h));
 
                     // Kan ik naar links, staan op i-1,j
-                    if (step(i - 1, j, true,t, veld, b, h)
+                    if (step(i - 1, j, true,t, veld, b, h))
                        // opties[1]=code(i - 1, j, 1, sw(i - 1, j,t, veld, b, h));
 
                     // Kan ik naar beneden, gaan EW-liggen op i,j+1
-                    if (step(i, j + 1, false,t, veld, b, h && step(i + 1, j + 1, false,t, veld, b, h)
+                    if (step(i, j + 1, false,t, veld, b, h) && step(i + 1, j + 1, false,t, veld, b, h))
                         //opties[2]=code(i, j + 1, 3, sw(i, j + 1, sw(i + 1, j + 1,t, veld, b, h)));
 
                     // Kan ik omhoog, gaan EW-liggen op i,j-1
-                    if (step(i, j - 1, false,t, veld, b, h && step(i + 1, j - 1, false,t, veld, b, h)
+                    if (step(i, j - 1, false,t, veld, b, h) && step(i + 1, j - 1, false,t, veld, b, h))
                        // opties[3]=code(i, j - 1, 3, sw(i, j - 1, sw(i + 1, j - 1,t, veld, b, h)));
                     break;
                 default: break;
             }
 }
 
-void Badj(int p, __local int* opties, veld, b, h)
+void Badj(int p, __local int* opties, __global int* veld, int b, int h)
 {
 			int i = xpositie(p); int j = ypositie(p);
             int s = richting(p); int t = schakelaars(p);
@@ -163,7 +163,7 @@ void Badj(int p, __local int* opties, veld, b, h)
             }
 }
 
-void Adj(int tc, int p, __local int* opties, __global int* veld, b, h)
+void Adj(int tc, int p, __local int* opties, __global int* veld, int b, int h)
     {
        if(tc==1)
 	   {
@@ -184,44 +184,5 @@ __kernel void device_function(
 	{
 		int id = get_global_id(0);
 		int positie = pos_in[id];
-
-		//Adj(tc, positie, opties, veld, b, h);
-
-		//data[0]= Testt();
-
-		/*for(int i = 0; i < N_in; i++)
-		{
-			__local int opties [4];
-			int p = pos_in[i];
-			Adj(tc, p, opties);
-		}*/
-
-		//__local uint *counter = 3;
-		//uint old_val = atomic_inc( counter );	//make atomic increment on it
-		//counter = counter + 1;
-
-		//N_uit[0] = counter;
-
-		/*if (N_uit[0] < N_in)
-		{
-			int oud = atomic_inc( &N_uit[0]);
-		}*/
-		
-		//int i = get_global_id(0);
-
-		//N_uit[i] = 3;
-
-		//Adj(tc, N_in, int* pos_in, int* pa);
-
-		//__local int LP [4];
-		//LP[0] = 1;
-		//Console.WriteLine("hoi");
-
-		//Adj(0,0,LP);
-
-		//if (LP[0] == 3)
-		//{
-		//	data[0]= 76;
-		//}
 	}
 
