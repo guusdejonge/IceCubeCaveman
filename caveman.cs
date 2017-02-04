@@ -99,6 +99,7 @@ namespace Caveman
         int b, h, tt;       // Breedte, Hoogte, typen Toverschotsen
         int start;          // Gegeven startconfiguratie
         char[,] veld;       // Kaart van het eiland
+        int[,] gpuVeld;
         int tc;         // Uitvoermodus (Length Path Animation), switch color
 
         static Stopwatch timer = new Stopwatch();
@@ -129,6 +130,8 @@ namespace Caveman
 
             // Nu komt de kaart; let op, Y is een X met Caveman
             veld = new char[b, h];
+            gpuVeld = new int[b, h];
+
             for (int j = 0; j < h; j++)
             {
                 string l = lines[j + 1];
@@ -136,9 +139,17 @@ namespace Caveman
                     {
                         start = code(i, j, 1, 0);  // 1 = staand, 0 = tover open
                         veld[i, j] = 'X';
+                        gpuVeld[i, j] = (int)('X');
                     }
-                    else veld[i, j] = l[i];
+                    else
+                    {
+                        veld[i, j] = l[i];
+                        char letter = (char)(l[i]);
+                        
+                            gpuVeld[i, j] = (int)(letter);
+                    }
             }
+            
         }
 
         private bool IsGezien(int c)
@@ -186,15 +197,14 @@ namespace Caveman
 
             int[] pa = new int[N_in * 4];
 
-            int[] N_uitArray = new int[1];
+            int[] N_uitArray = new int[60];
 
 
             var flagwrite = ComputeMemoryFlags.WriteOnly | ComputeMemoryFlags.UseHostPointer;
 
             ComputeBuffer<int> pos_inBuffer = new ComputeBuffer<int>(Program.context, flagwrite, pos_in);
             ComputeBuffer<int> paBuffer = new ComputeBuffer<int>(Program.context, flagwrite, pa);
-            N_uitArray[0] = 0;
-            ComputeBuffer<int> N_uitBuffer = new ComputeBuffer<int>(Program.context, flagwrite, N_uitArray);
+            ComputeBuffer<int> N_uitBuffer = new ComputeBuffer<int>(Program.context, flagwrite, pos_uit);
 
             while (true)
             {
@@ -212,12 +222,38 @@ namespace Caveman
                     long[] localSize = { 32, 4 };								            // threads per workgroup
                     Program.queue.Execute(Program.kernel, null, workSize, null, null);      // voer de kernel uit
                     Program.queue.ReadFromBuffer(pos_inBuffer, ref pos_in, true, null);     // haal de data terug
-                    Program.queue.ReadFromBuffer(N_uitBuffer, ref N_uitArray, true, null);		// haal de data terug
-                    Console.WriteLine(N_uitArray[0]);
-                    if  (N_uitArray[0] == 30000)
+                    Program.queue.ReadFromBuffer(N_uitBuffer, ref pos_uit, true, null);		// haal de data terug
+
+                    for (int i = 0; i < veld.GetLength(1); i++)
                     {
-                        Console.WriteLine("ja");
+                        Console.WriteLine();
+                        for (int j = 0; j < veld.GetLength(0); j++)
+                        {
+                            Console.Write(veld[j, i]);
+                        }
                     }
+
+                    for (int i = 0; i < gpuVeld.GetLength(1); i++)
+                    {
+                        Console.WriteLine();
+                        for (int j = 0; j < gpuVeld.GetLength(0); j++)
+                        {
+                            Console.Write(gpuVeld[j, i]);
+                        }
+                    }
+
+                    
+
+                    //Console.WriteLine(N_uitArray[0]);
+                    //for(int i = 0; i < pos_uit.Length; i++)
+                    //{
+                    //    //Console.WriteLine(i);
+                    //    Console.WriteLine(pos_uit[i]);
+                    //}
+                    //if  (N_uitArray[0] == 30000)
+                    //{
+                    //    Console.WriteLine("ja");
+                    //}
                     /*
                     if (data[0] == 76)
                     {
